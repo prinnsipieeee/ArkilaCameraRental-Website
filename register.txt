@@ -1,0 +1,31 @@
+<?php
+// Include database connection
+include 'db_connect.php';
+
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    // Get user input
+    $username = mysqli_real_escape_string($conn, $_POST['username']);
+    $email = mysqli_real_escape_string($conn, $_POST['email']);
+    $password = mysqli_real_escape_string($conn, $_POST['password']);
+    $confirm_password = mysqli_real_escape_string($conn, $_POST['confirm_password']);
+
+    // Check if passwords match
+    if ($password !== $confirm_password) {
+        die("Passwords do not match!");
+    }
+
+    // Store the plain text password
+    $sql = "INSERT INTO users (username, email, password) VALUES ('$username', '$email', '$password')";
+
+    if ($conn->query($sql) === TRUE) {
+        echo "Registration successful!";
+        header("Location: login.php"); // Redirect to login page
+        exit();
+    } else {
+        die("Error: " . $conn->error); // Error message if query fails
+    }
+}
+
+// Close the database connection
+$conn->close();
+?>

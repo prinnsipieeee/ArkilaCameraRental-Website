@@ -1,0 +1,401 @@
+<?php
+// Start the session if not already started
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Database connection settings
+$servername = "localhost";
+$username = "root";
+$password = "";
+$dbname = "owner_database";
+
+// Create a connection
+$conn = new mysqli($servername, $username, $password, $dbname);
+
+// Check connection
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+}
+
+// Function to handle updates for each table
+function updateTable($conn, $table, $data, $whereColumn) {
+    unset($data['update_customer'], $data['update_booking'], $data['update_product'], $data['update_sale'], $data['update_users']);
+
+    $setValues = [];
+    foreach ($data as $column => $value) {
+        $setValues[] = "$column = '" . $conn->real_escape_string($value) . "'"; 
+    }
+    $setValuesStr = implode(", ", $setValues);
+    $whereValue = $conn->real_escape_string($data[$whereColumn]);
+    $updateQuery = "UPDATE $table SET $setValuesStr WHERE $whereColumn = '$whereValue'";
+
+    if ($conn->query($updateQuery) === TRUE) {
+        return ['status' => 'success', 'message' => "Record updated successfully in $table"];
+    } else {
+        error_log("Error in query: " . $updateQuery); // Log query for debugging
+        return ['status' => 'error', 'message' => "Error updating $table: " . $conn->error];
+    }
+
+    $updateQuery = "UPDATE $table SET $setValuesStr WHERE $whereColumn = '$whereValue'";
+    error_log("Executing query: $updateQuery"); // Log the query
+}
+
+// Handle AJAX update
+if (isset($_POST['ajax_update'])) {
+    $table = $_POST['table'];
+    $data = $_POST;
+    unset($data['ajax_update']);  // Remove the ajax_update flag
+    unset($data['table']);        // Remove the table name flag
+
+    // Use the appropriate where column depending on the table
+    $whereColumn = isset($data['users_id']) ? 'users_id' : (isset($data['customer_id']) ? 'customer_id' : (isset($data['booking_id']) ? 'booking_id' : ((isset($data['product_id']) ? 'product_id' : 'sale_id'))));
+    
+    $updateResult = updateTable($conn, $table, $data, $whereColumn);
+    
+    header('Content-Type: application/json'); // Specify JSON content type
+    echo json_encode($updateResult); // Return JSON response
+    exit; // Stop further script execution
+}
+
+
+// Fetch data for each table
+$customersResult = $conn->query("SELECT * FROM customers");
+$bookingsResult = $conn->query("SELECT * FROM bookings");
+$productsResult = $conn->query("SELECT * FROM products");
+$salesResult = $conn->query("SELECT * FROM sales");
+$usersResult = $conn->query("SELECT * FROM users");
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Owner Dashboard - Camera Rental</title>
+    <style>
+        /* General styling */
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            margin: 0;
+            background-color: #f9f9f9;
+            color: #333;
+        }
+
+        .sidebar {
+            width: 250px;
+            background-color: #333;
+            color: white;
+            padding-top: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .sidebar h2 {
+            margin-bottom: 30px;
+            font-size: 24px;
+        }
+
+        .sidebar button {
+            width: 80%;
+            background-color: #444;
+            color: white;
+            padding: 15px;
+            border: none;
+            margin: 5px 0;
+            cursor: pointer;
+            text-align: left;
+        }
+
+        .sidebar button:hover {
+            background-color: #555;
+        }
+
+        .content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #ccc;
+        }
+
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+       .form-input {
+        padding: 5px;
+        margin: 2px;
+        border: 1px solid #ccc;
+        border-radius: 3px;
+        width: 90%;
+        }   
+
+        .update-btn {
+        padding: 5px 10px;
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        border-radius: 3px;
+        cursor: pointer;
+        }
+
+
+        .update-btn:hover {
+            background-color: green;
+        }
+
+        .table-section {
+            display: none;
+            width: 100%;
+            margin-top: 50px;
+        }
+
+        .message {
+        font-size: 12px;
+        color: green;
+        }
+
+    </style>
+    <script>
+        function toggleTable(tableId) {
+            var tables = document.querySelectorAll('.table-section');
+            tables.forEach(table => table.style.display = 'none');
+            document.getElementById(tableId).style.display = 'block';
+        }
+
+        function updateRecord(event, table) {
+            event.preventDefault();  // Prevent form submission
+
+            var form = event.target;
+            var formData = new FormData(form);
+            formData.append('ajax_update', true);
+            formData.append('table', table);
+
+            fetch('dashboard.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Handle the success or error message
+                var messageDiv = form.querySelector('.message');
+                if (data.status === 'success') {
+                    messageDiv.textContent = data.message;
+                    messageDiv.style.color = 'green';
+                } else {
+                    messageDiv.textContent = data.message;
+                    messageDiv.style.color = 'red';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
+    </script>
+
+     <script>
+    function updateRecord(form, tableName) {
+        // Log form and tableName for debugging
+        console.log("Updating record in table:", tableName);
+
+        // Convert form data to JSON
+        const formData = new FormData(form);
+        formData.append('ajax_update', true);
+        formData.append('table', tableName);
+
+        fetch('dashboard.php', {
+            method: 'POST',
+            body: formData,
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log("Response data:", data); // Log response for debugging
+            if (data.status === 'success') {
+                alert(data.message);  // Show success message
+                location.reload();    // Reload the page to show updated data
+            } else {
+                alert(data.message);  // Show error message
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while updating the record.');
+        });
+
+        return false;  // Prevent default form submission
+        }
+    </script>
+
+</head>
+<body>
+
+<div class="sidebar">
+    <h2>Dashboard</h2>
+    <button onclick="toggleTable('customers')">👤 Customer Details</button>
+    <button onclick="toggleTable('bookings')">📅 Bookings</button>
+    <button onclick="toggleTable('products')">📷 Products</button>
+    <button onclick="toggleTable('sales')">💵 Sales</button>
+    <button onclick="toggleTable('users')">👥 Users</button>
+    <form action="logout.php" method="POST">
+        <button type="submit" class="update-btn" style="width: 100%; background-color: red;">Logout</button>
+    </form>
+</div>
+
+<div class="content">
+    <h1>Welcome!</h1>
+
+    <!-- Customers Table -->
+    <div id="customers" class="table-section">
+        <h2>Customer Details</h2>
+        <table>
+            <tr>
+                <th>ID</th><th>Name</th><th>Email</th><th>Contact</th><th>Address</th><th>Actions</th>
+            </tr>
+            <?php while ($row = $customersResult->fetch_assoc()): ?>
+                <form onsubmit="updateRecord(this, 'customers')">
+                    <tr>
+                        <td><input type="text" name="customer_id" value="<?= $row['customer_id'] ?>" class="form-input" readonly /></td>
+                        <td><input type="text" name="name" value="<?= $row['name'] ?>" class="form-input" /></td>
+                        <td><input type="email" name="email" value="<?= $row['email'] ?>" class="form-input" /></td>
+                        <td><input type="text" name="contact" value="<?= $row['contact'] ?>" class="form-input" /></td>
+                        <td><input type="text" name="address" value="<?= $row['address'] ?>" class="form-input" /></td>
+                        <td><button type="submit" class="update-btn">Update</button></td>
+                        <td><div class="message"></div></td>
+                    </tr>
+                </form>
+            <?php endwhile; ?>
+        </table>
+    </div>
+
+    <!-- Bookings Table -->
+<div id="bookings" class="table-section">
+    <h2>Bookings</h2>
+    <table>
+        <tr>
+            <th>ID</th><th>Customer ID</th><th>Camera Model</th><th>Booking Date</th><th>Status</th><th>Actions</th>
+        </tr>
+        <?php while ($row = $bookingsResult->fetch_assoc()): ?>
+            <form onsubmit="updateRecord(this, 'bookings')">
+                 <tr>
+                    <td><input type="text" name="booking_id" value="<?= $row['booking_id'] ?>" class="form-input" readonly /></td>
+                    <td><input type="text" name="customer_id" value="<?= $row['customer_id'] ?>" class="form-input" /></td>
+                    <td><input type="text" name="camera_model" value="<?= $row['camera_model'] ?>" class="form-input" /></td>
+                    <td><input type="date" name="booking_date" value="<?= date('Y-m-d', strtotime($row['booking_date'])) ?>" class="form-input" /></td>
+                    <td>
+                        <select name="status" class="form-input">
+                            <option value="Pending" <?= $row['status'] == 'Pending' ? 'selected' : '' ?>>Pending</option>
+                            <option value="Confirmed" <?= $row['status'] == 'Confirmed' ? 'selected' : '' ?>>Confirmed</option>
+                            <option value="Completed" <?= $row['status'] == 'Completed' ? 'selected' : '' ?>>Completed</option>
+                            <option value="Cancelled" <?= $row['status'] == 'Cancelled' ? 'selected' : '' ?>>Cancelled</option>
+                        </select>
+                    </td>
+
+                    <td><button type="submit" name="update_product" class="update-btn">Update</button></td>
+                </tr>
+            </form>
+        <?php endwhile; ?>
+    </table>
+</div>
+
+    <!-- Products Table -->
+    <div id="products" class="table-section">
+        <h2>Products</h2>
+        <table>
+            <tr>
+                <th>ID</th><th>Name</th><th>Price</th><th>Availability</th><th>Actions</th>
+            </tr>
+            <?php while ($row = $productsResult->fetch_assoc()): ?>
+                <form onsubmit="updateRecord(this, 'products')">
+                <tr>
+                    <td><input type="text" name="product_id" value="<?= $row['product_id'] ?>" readonly /></td>
+                    <td><input type="text" name="camera_model" value="<?= $row['camera_model'] ?>" /></td>
+                    <td><input type="text" name="price" value="<?= $row['price'] ?>" /></td>
+                    <td><input type="text" name="availability" value="<?= $row['availability'] ?>" /></td>
+                     <td><button type="submit" name="update_product" class="update-btn">Update</button></td>
+                </tr>
+                </form>
+            <?php endwhile; ?>
+        </table>
+    </div>
+
+     <!-- Sales Table -->
+    <div id="sales" class="table-section">
+        <h2>Sales</h2>
+        <table>
+            <tr>
+            <th>ID</th><th>Product ID</th><th>Customer ID</th><th>Amount</th><th>Sales Date</th><th>Actions</th>
+            </tr>
+            <?php while ($row = $salesResult->fetch_assoc()): ?>
+                <form onsubmit="updateRecord(this, 'sales')">
+                <tr>
+                    <td><input type="text" name="sale_id" value="<?= $row['sale_id'] ?>" readonly /></td>
+                    <td><input type="text" name="customer_id" value="<?= $row['customer_id'] ?>" /></td>
+                    <td><input type="text" name="camera_model" value="<?= $row['camera_model'] ?>" /></td>
+                    <td><input type="text" name="total_amount" value="<?= $row['total_amount'] ?>" /></td>
+                    <td><input type="date" name="sale_date" value="<?= date('Y-m-d', strtotime($row['sale_date'])) ?>" /></td>
+                     <td><button type="submit" name="update_sale" class="update-btn">Update</button></td>
+                </tr>
+                </form>
+            <?php endwhile; ?>
+        </table>
+    </div>
+
+    <!-- Users Table -->
+<div id="users" class="table-section">
+    <h2>Users</h2>
+    <table>
+        <tr>
+            <th>ID</th>
+            <th>Username</th>
+            <th>Email</th>
+            <th>Password</th>
+            <th>Actions</th>
+        </tr>
+        <?php while ($row = $usersResult->fetch_assoc()): ?>
+            <form onsubmit="updateRecord(this, 'users')">
+                <tr>
+                    <td><input type="text" name="id" value="<?= $row['id'] ?>" class="form-input" readonly /></td>
+                    <td><input type="text" name="username" value="<?= $row['username'] ?>" class="form-input" /></td>
+                    <td><input type="email" name="email" value="<?= $row['email'] ?>" class="form-input" /></td>
+                    <td><input type="text" name="password" value="<?= $row['password'] ?>" class="form-input" /></td>
+                    <td><button type="submit" class="update_users">Update</button></td>
+                </tr>
+            </form>
+        <?php endwhile; ?>
+    </table>
+</div>
+</div>
+
+    
+
+</body>
+</html>
+
+<?php
+$conn->close(); // Close the database connection
+?>

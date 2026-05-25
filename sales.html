@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="shortcut icon" href="img/logo-1.png">
+    <style>
+        /* General Styles */
+        body {
+            font-family: "Times New Roman", Times, serif;
+            margin: 20px;
+            background-color: dimgray;
+            color: #333;
+        }
+
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 20px;
+        }
+
+        /* Table Styles */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+            background: white;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        th, td {
+            text-align: center;
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #0056b3;
+            color: white;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        /* Chart Container */
+        .chart-container {
+            max-width: 90%;
+            margin: 0 auto;
+            padding: 20px;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        canvas {
+            width: 100%;
+            max-width: 1200px; /* Increase max width for the chart */
+            height: 500px; /* Adjust chart height */
+        }
+
+        /* Back Button Styles */
+        .back-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            padding: 10px;
+            background-color: #0056b3;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 18px;
+        }
+
+        .back-btn:hover {
+            background-color: #004080;
+        }
+
+        .back-btn i {
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Back to Dashboard Button with Arrow -->
+    <button class="back-btn" onclick="window.location.href='dashboard.php';">
+        <i>←</i> Back to Dashboard
+    </button>
+
+    <h1>Sales Dashboard</h1>
+
+    <!-- Table Section -->
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Total Sales</th>
+            </tr>
+        </thead>
+        <tbody id="sales-table"></tbody>
+    </table>
+
+    <!-- Chart Section -->
+    <div class="chart-container">
+        <canvas id="salesChart"></canvas>
+    </div>
+
+    <script>
+        fetch('fetch_sales.php?view=daily') // Fetch daily sales data from your PHP file
+            .then(response => response.json())
+            .then(data => {
+                const tableBody = document.getElementById('sales-table');
+                const chartLabels = [];
+                const chartData = [];
+
+                // Populate table and prepare data for the chart
+                data.forEach(sale => {
+                    // Populate Table
+                    const row = document.createElement('tr');
+                    row.innerHTML = `<td>${sale.date}</td><td>${sale.total_sales}</td>`;
+                    tableBody.appendChild(row);
+
+                    // Prepare Data for Chart
+                    chartLabels.push(sale.date);
+                    chartData.push(sale.total_sales);
+                });
+
+                // Create Bar Chart
+                const ctx = document.getElementById('salesChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: chartLabels, // X-axis labels
+                        datasets: [{
+                            label: 'Daily Sales',
+                            data: chartData, // Y-axis data
+                            backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top'
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: {
+                                    display: true
+                                },
+                                title: {
+                                    display: true,
+                                    text: 'Dates'
+                                }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                grid: {
+                                    display: true
+                                },
+                                title: {
+                                    display: true,
+                                    text: 'Total Sales'
+                                }
+                            }
+                        }
+                    }
+                });
+            });
+    </script>
+</body>
+</html>

@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendar Appointment</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/6.1.8/fullcalendar.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/6.1.8/index.global.min.js"></script>
+
+    <link href="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.8/main.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.8/main.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.8/main.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/interaction@6.1.8/main.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
+    <link rel="shortcut icon" href="img/logo-1.png">
+
+    <style>
+        .body {
+            font-family: Arial, sans-serif;
+            background-color: dimgray;
+        }
+        .back-button-container {
+            background-color: dimgray;
+            padding: 10px;
+            text-align: left;
+        }
+        .back-button {
+            display: inline-block;
+            padding: 10px 20px;
+            font-size: 16px;
+            color: #fff;
+            background-color: darkgrey;
+            border: none;
+            border-radius: 5px;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .back-button:hover {
+            background-color: #0056b3;
+        }
+
+        .container {
+            margin-top: 30px;
+        }
+
+        .form-container {
+            background: whitesmoke;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.3);
+            margin-bottom: 20px;
+            font-family: "Times New Roman", Times, serif;
+        }
+
+        .form-container .h4 {
+            color: #ddd;
+        }
+
+        .btn-primary {
+            background-color: blue;
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background-color: dimgray;
+        }
+
+        .calendar-container {
+            background: whitesmoke;
+            border-radius: 10px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            margin-left: -50px;
+            margin-top: 200PX;
+            font-family: "Times New Roman", Times, serif;
+        }
+        .terms {
+            font-size: 17px;
+        }
+
+        .legend {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        margin-top: 10px;
+        }
+        .legend .div {
+            width: 15px;
+            height: 15px;
+            margin-right: 8px;
+            border-radius: 3px;
+        }
+        .legend .span {
+            font-size: 14px;
+            color: #333;
+        }
+        /* Style for past days */
+        .fc .past-day {
+            background-color: #e0e0e0; /* Light gray */
+            color: #999; /* Gray text */
+            opacity: 0.5; /* Faded look */
+        }
+
+        /* Style for the current day */
+        .fc .current-day {
+        background-color: #fffbcc; /* Light yellow */
+        border: 2px solid #ffcc00; /* Gold border */
+        }
+
+        /* Style for future days */
+        .fc .future-day {
+        background-color: #ffffff; /* Default white */
+        color: #000; /* Default text color */
+        }
+
+       #receipt-section {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    width: 90%;
+    max-width: 800px;
+}
+
+#receipt-section .d-flex {
+    display: flex;
+    gap: 20px; /* Space between form and image */
+    align-items: flex-start; /* Align form and image to the top */
+}
+
+#receipt-image .img {
+    width: 2in; /* Adjust size to 2x2 inches */
+    height: 2in;
+    object-fit: cover; /* Keeps the aspect ratio */
+    border-radius: 10px; /* Rounded corners */
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2); /* Optional shadow for aesthetics */
+}
+
+
+    
+
+    </style>
+</head>
+<body style="background-color: dimgray;">
+     <div class="back-button-container">
+        <a href="package.html" class="back-button">Back to Packages</a>
+    <div class="container">
+        <div class="row">
+            <!-- Calendar Section -->
+            <div class="col-lg-6">
+                <div class="calendar-container">
+                    <div id="calendar"></div>
+                    <div class="legend mt-3">
+                        <div class="d-flex align-items-center">
+                            <div style="width: 15px; height: 15px; background-color: red; margin-right: 10px;"></div>
+                            <span style="font-size: 14px;">Booked</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Form Section -->
+            <div class="col-lg-6">
+                <div class="form-container">
+                    <h4>Appointment Form</h4>
+                    <form id="appointment-form" action="save_appointment.php" method="POST" enctype="multipart/form-data">
+                    <!-- Step 1 -->
+                        <div id="step-1" class="terms">
+                            <h4>TERMS AND CONDITIONS, PLEASE READ.</h4>
+                            <div>
+                                We strongly encourage you to please carefully read and understand the following terms and conditions prior to making transactions with Arkila - Camera Rental. Kindly take note that the conditions set out shall prevail in case of any conflict. Once you have submitted your order form, you have consented to be lawfully bound by the accompanying terms and conditions.
+                            </div>
+                            <br>
+                            <div>
+                                Personal Information: Borrowers must provide personal details, including full name, address, contact number, email, and social media links, for transaction purposes.
+                            </div>
+                            <br>
+                            <div>
+                                Damages and Liabilities: Cameras and lenses are fully functional at the time of rental. Borrowers are liable for 100% of repair costs for any damage upon return. Minimize tripod/stabilizer use to avoid issues.
+                            </div>
+                            <br>
+                            <div>
+                                Payment: A non-refundable PHP200 down payment is required to confirm reservations and will be deducted from the total rental cost. Late returns incur a PHP100/hour fee.
+                            </div>
+                            <br>
+                            <div>
+                                Security: Borrowers must provide clear photos of two valid IDs and selfies with each ID. Add the owner on Facebook for identity verification: https://www.facebook.com/jayce.arkila
+                            </div>
+                            <br>
+                            <div>
+                                Shipping: Borrowers cover delivery and return shipping costs. Weekend meet-ups are possible only near Lower Antipolo (For meet-ups, refer to the owner’s location: Koffie, Brgy. Maligaya, Antipolo, Rizal, Philippines.).
+                            </div>
+                            <br>
+                            <div>
+                                The owner reserves the right to decline any reservation if the borrower’s credibility is questioned.
+                            </div>
+                            <br>
+                            <div class="form-check mb-3">
+                                <input type="checkbox" class="form-check-input" id="agree-terms">
+                                <label class="form-check-label" for="agree-terms">I have read and agree to the terms and conditions</label>
+                            </div>
+                            <button type="button" class="btn btn-primary w-100" id="next-step">Next</button>
+                        </div>
+                        <!-- Step 2 -->
+                        <div id="step-2" style="display: none;">
+                            <div class="mb-3">
+                                <label for="email" class="form-label">Enter a email address</label>
+                                <input type="email" class="form-control" id="email" name="email" placeholder="Enter your email address" required>
+                            </div>
+                            <!-- Camera Model Selection -->
+                            <div class="mb-3">
+                                <label for="camera-model" class="form-label">Camera Model</label>
+                                <select class="form-control" name="camera_model" id="camera-model" required>
+                                    <option value="">Select Camera Model</option>
+                                    <option value="Canon EOS M3">Canon EOS M3</option>
+                                    <option value="Canon EOS 1200D">Canon EOS 1200D</option>
+                                    <option value="Canon EOS 1300D">Canon EOS 1300D</option>
+                                    <option value="Canon 400D">Canon 4000D</option>
+                                    <option value="Per Piece Rental">Per Piece Rental</option>
+                                </select>
+                            </div>
+
+                            <!-- Bundle Selection (Dynamically Updated) -->
+                            <div class="mb-3">
+                                <label for="camera-bundle" class="form-label">Camera Bundle</label>
+                                <select class="form-control" name="camera_bundle" id="camera-bundle" required>
+                                    <option value="">Select Bundle</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="full-name" class="form-label">Full Name</label>
+                                <input type="text" class="form-control" name="full_name" id="full-name" placeholder="Enter your full name" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="contact-number" class="form-label">Contact Number</label>
+                                <input type="text" class="form-control" name="contact_number" id="contact-number" placeholder="Enter your contact number" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="age" class="form-label">Age</label>
+                                <input type="number" class="form-control" name="age" id="age" placeholder="Enter your age" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="complete-address" class="form-label">Complete Address</label>
+                                <input type="text" class="form-control" name="complete_address" id="complete-address" placeholder="Enter your complete address" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="delivery-address" class="form-label">Exact Delivery Address</label>
+                                <input type="text" class="form-control" name="delivery_address" id="delivery-address" placeholder="Enter your delivery address" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="landmark" class="form-label">Pin Location / Landmark</label>
+                                <input type="text" class="form-control" name="landmark" id="landmark" placeholder="Enter a landmark or pin location" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="facebook-link" class="form-label">Link to Facebook Account</label>
+                                <input type="url" class="form-control" name="facebook_link" id="facebook-link" placeholder="Paste your Facebook profile link" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="start-date" class="form-label">Start Date</label>
+                                <input type="date" class="form-control" name="start_date" id="start-date" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="end-date" class="form-label">End Date</label>
+                                <input type="date" class="form-control" name="end_date" id="end-date" required>
+                            </div>
+                            <div class="mb-3">
+                            <label for="id-image" class="form-label">Upload Selfie Picture Holding your Valid ID</label>
+                            <input type="file" class="form-control" name="id_image" id="id-image" required>
+                        </div>
+                            <button type="button" id="generate-receipt" class="btn btn-primary w-100">Generate Receipt</button>
+                        </div>
+
+                    <!-- Receipt Section -->
+                    <div id="receipt-section" style="display: none;">
+                        <h5 class="text-center mb-4">Receipt</h5>
+                        <div class="d-flex">
+                            <!-- Form Section -->
+                            <div class="flex-fill">
+                                <form action="save_appointment.php" method="POST" enctype="multipart/form-data">
+                                    <!-- Receipt Details -->
+                                    <div id="receipt-details"></div>
+
+                                    <!-- Amount Paid -->
+                                    <div class="form-group mt-3">
+                                        <label for="payment-amount">Amount Paid:</label>
+                                        <input 
+                                            type="number" 
+                                            id="payment-amount" 
+                                            name="payment_amount" 
+                                            class="form-control" 
+                                            placeholder="Enter amount paid" 
+                                            required 
+                                            min="1" 
+                                            step="0.01">
+                                    </div>
+
+                                    <!-- Payment Proof -->
+                                    <div class="form-group mt-3">
+                                        <label for="payment-proof">Upload Payment Proof:</label>
+                                        <input 
+                                            type="file" 
+                                            id="payment-proof" 
+                                            name="payment_proof" 
+                                            class="form-control" 
+                                            required>
+                                    </div>
+
+                                    <!-- Submit Button -->
+                                    <button type="submit" class="btn btn-primary w-100 mt-2">Confirm Booking</button>
+
+                                    <!-- Cancel Button -->
+                                    <button type="button" class="btn btn-danger w-100 mt-2" id="cancel-booking">Cancel Booking</button>
+                                </form>
+                            </div>
+
+                            <!-- Image Section -->
+                            <div id="receipt-image" class="ms-2">
+                                <img src="img/QR.jpg" alt="Receipt Image" class="rounded shadow" style="width: 4in; height: 4in; object-fit: cover;">> 
+                                <h1 class="center">Jaycelyn Bitago</h1>
+                                <h1>Scan to Pay</h1>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        // Multi-step Form Logic
+        const nextButton = document.getElementById('next-step');
+        const agreeTerms = document.getElementById('agree-terms');
+        const step1 = document.getElementById('step-1');
+        const step2 = document.getElementById('step-2');
+        const generateReceiptButton = document.getElementById('generate-receipt');
+        const receiptSection = document.getElementById('receipt-section');
+        const receiptDetails = document.getElementById('receipt-details');
+
+
+        nextButton.addEventListener('click', function () {
+            if (agreeTerms.checked) {
+                step1.style.display = 'none'; // Hide terms and conditions
+                step2.style.display = 'block'; // Show the next step
+            } else {
+                alert('Please agree to the terms and conditions before proceeding.');
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', function () {
+        document.getElementById('generateReceiptButton').addEventListener('click', function () {
+        const email = document.getElementById('email').value;
+        const cameraModel = document.getElementById('camera-model').value;
+        const startDate = document.getElementById('start-date').value;
+        const endDate = document.getElementById('end-date').value;
+        const receiptDetails = document.getElementById('receipt-details');
+        const receiptSection = document.getElementById('receipt-section');
+
+        if (email && cameraModel && startDate && endDate) {
+            const rentalDays = Math.ceil((new Date(endDate) - new Date(startDate)) / (1000 * 3600 * 24));
+            const rentalRate = 100; // Replace with your actual rate per day
+            const totalAmount = rentalDays * rentalRate;
+
+            receiptDetails.innerHTML = `
+                <p><strong>Email:</strong> ${email}</p>
+                <p><strong>Camera Model:</strong> ${cameraModel}</p>
+                <p><strong>Rental Days:</strong> ${rentalDays}</p>
+                <p><strong>Total Amount:</strong> ₱${totalAmount}</p>
+                <p><strong>Start Date:</strong> ${startDate}</p>
+                <p><strong>End Date:</strong> ${endDate}</p>
+            `;
+            receiptSection.style.display = 'block';
+        } else {
+            alert('Please fill all fields to generate the receipt.');
+        }
+    });
+
+    // Update the amount paid on input
+    const paymentAmountInput = document.getElementById('payment-amount');
+    const amountPaid = document.getElementById('amount-paid');
+
+    paymentAmountInput.addEventListener('input', function () {
+        const paymentAmount = parseFloat(paymentAmountInput.value) || 0;
+        amountPaid.textContent = `₱${paymentAmount}`;
+    });
+});
+
+
+
+        // Camera Model and Bundle Logic
+        const cameraModelSelect = document.getElementById('camera-model');
+        const cameraBundleSelect = document.getElementById('camera-bundle');
+
+        const cameraBundles = {
+    "Canon EOS M3": ["Canon M3 Body", "Bundle A", "Bundle B", "Bundle C", "Bundle D", "Bundle E"],
+    "Canon EOS 1200D": ["Canon EOS 1200D Body", "Bundle A", "Bundle B", "Bundle C", "Bundle D", "Bundle E"],
+    "Canon EOS 1300D": ["Canon EOS 1300D Body", "Bundle A", "Bundle B", "Bundle C", "Bundle D", "Bundle E"],
+    "Canon 400D": ["Canon 400D Body", "Bundle A", "Bundle B", "Bundle C", "Bundle D", "Bundle E"],
+    "Per Piece Rental": ["15-45mm", "35mm", "Wireless Mic", "Tripod", "EF-S 10-18mm", "EF-S 35mm", "EF-S 50mm", "EF-S 75-300mm", "Battery LP-E10", "Memory Card 64GB", "Reflector", "2 Softbox"]
+};
+
+
+
+        cameraModelSelect.addEventListener('change', function() {
+            const selectedModel = cameraModelSelect.value;
+            cameraBundleSelect.innerHTML = '<option value="">Select Bundle</option>'; // Reset the bundle options
+            if (selectedModel) {
+                cameraBundles[selectedModel].forEach(function(bundle) {
+                    const option = document.createElement('option');
+                    option.value = bundle;
+                    option.textContent = bundle;
+                    cameraBundleSelect.appendChild(option);
+                });
+            }
+        });
+
+
+
+        // Initialize FullCalendar
+document.addEventListener('DOMContentLoaded', function () {
+    const calendarEl = document.getElementById('calendar');
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        events: {
+            url: 'fetch_appointments.php', // The endpoint fetching events from your server
+            method: 'GET',
+            failure: function () {
+                alert('Failed to fetch appointments.');
+            },
+        },
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,timeGridDay'
+        },
+        dayCellClassNames: function (arg) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0); // Reset time for comparison
+            
+            const cellDate = arg.date;
+            if (cellDate < today) {
+                return ['past-day']; // Add a class for past days
+            } else if (cellDate.toDateString() === today.toDateString()) {
+                return ['current-day']; // Add a class for the current day
+            } else {
+                return ['future-day']; // Add a class for future days
+            }
+        },
+        eventContent: function (info) {
+            const event = info.event;
+            const customerName = event.extendedProps.customer_name || ''; // Customer's name
+            const cameraModel = event.extendedProps.camera_model || ''; // Camera rented
+            
+            // Display customer name and camera model
+            return {
+                html: `
+                    <div style="text-align: center; color: white; font-weight: bold;">
+                        <p>${customerName}</p>
+                        <p>${cameraModel}</p>
+                        <p>Booked</p>
+                    </div>
+                `
+            };
+        },
+        eventBackgroundColor: 'red', // Event background color
+        eventBorderColor: 'red', // Event border color
+    });
+    calendar.render();
+});
+
+// Pricing for each camera model and bundle
+const pricing = {
+    "Canon EOS M3": { 
+        basePrice: 1000, 
+        bundles: { 
+            "Canon M3 Body": 550, 
+            "Bundle A": 750, 
+            "Bundle B": 750, 
+            "Bundle C": 950, 
+            "Bundle D": 500, 
+            "Bundle E": 600 
+        } 
+    },
+    "Canon EOS 1200D": { 
+        basePrice: 900, 
+        bundles: { 
+            "Canon EOS 1200D Body": 500,
+            "Bundle A": 750, 
+            "Bundle B": 850, 
+            "Bundle C": 950, 
+            "Bundle D": 950, 
+            "Bundle E": 1500 
+
+        } 
+    },
+    "Canon EOS 1300D": { 
+        basePrice: 950, 
+        bundles: { 
+            "Canon EOS 1300D Body": 580,
+            "Bundle A": 850, 
+            "Bundle B": 850, 
+            "Bundle C": 950, 
+            "Bundle D": 950, 
+            "Bundle E": 1500 
+        } 
+    },
+    "Canon 400D": { 
+        basePrice: 850, 
+        bundles: { 
+            "Canon 400D Body": 600,
+            "Bundle A": 850, 
+            "Bundle B": 950, 
+            "Bundle C": 950, 
+            "Bundle D": 1200, 
+            "Bundle E": 1500 
+
+        } 
+    },
+    "Per Piece Rental": { 
+        basePrice: 850, 
+        bundles: { 
+            "15-45mm": 350, 
+            "35mm": 350, 
+            "Wireless Mic": 100, 
+            "Tripod": 100, 
+            "EF-S 10-18mm": 300, 
+            "EF-S 35mm": 350, 
+            "EF-S 50mm": 450, 
+            "EF-S 75-300mm": 550, 
+            "Battery LP-E10": 100, 
+            "Memory Card 64GB": 100, 
+            "Reflector": 150, 
+            "2 Softbox": 300 
+        }
+    }
+};
+
+// Eligible camera models for discounts
+const eligibleForDiscount = ["Canon EOS M3", "Canon EOS 1200D", "Canon EOS 1300D", "Canon 400D"]; // Add models that qualify for discounts
+
+// Event listener to generate receipt
+generateReceiptButton.addEventListener('click', function () {
+    const email = document.getElementById('email').value;
+    const cameraModel = document.getElementById('camera-model').value;
+    const cameraBundle = document.getElementById('camera-bundle').value;
+    const startDate = document.getElementById('start-date').value;
+    const endDate = document.getElementById('end-date').value;
+
+    if (email && cameraModel && cameraBundle && startDate && endDate) {
+        const rentalDays = Math.ceil((new Date(endDate) - new Date(startDate)) / (1000 * 3600 * 24));
+        
+// Discounted bundle prices for rentals more than 2 days
+const discountedPrices = {
+    "Canon EOS M3": {
+        "Canon M3 Body": 500,
+        "Bundle A": 650,
+        "Bundle B": 650,
+        "Bundle C": 850,
+        "Bundle D": 650
+    },
+    "Canon EOS 1200D": {
+        "Canon EOS 1200D Body": 400,
+        "Bundle A": 650,
+        "Bundle B": 750,
+        "Bundle C": 850,
+        "Bundle D": 900,
+        "Bundle E": 1300
+    },
+    "Canon EOS 1300D": {
+        "Canon EOS 1300D Body": 480,
+        "Bundle A": 750,
+        "Bundle B": 750,
+        "Bundle C": 850,
+        "Bundle D": 850,
+        "Bundle E": 1200
+    },
+    "Canon 400D": {
+        "Canon 400D Body": 500,
+        "Bundle A": 750,
+        "Bundle B": 850,
+        "Bundle C": 850,
+        "Bundle D": 1100,
+        "Bundle E": 1300
+    }
+};
+
+// Get the base bundle price
+let bundlePrice = pricing[cameraModel].bundles[cameraBundle];
+
+// Apply discount if rental exceeds 2 days
+if (rentalDays > 2 && discountedPrices[cameraModel]?.[cameraBundle] !== undefined) {
+    bundlePrice = discountedPrices[cameraModel][cameraBundle];
+}
+
+
+        // Calculate total cost
+        const totalCost = bundlePrice * rentalDays;
+
+        receiptDetails.innerHTML = `
+            <p><strong>Email:</strong> ${email}</p>
+            <p><strong>Camera Model:</strong> ${cameraModel}</p>
+            <p><strong>Camera Bundle:</strong> ${cameraBundle}</p>
+            <p><strong>Rental Days:</strong> ${rentalDays}</p>
+            <p><strong>Start Date:</strong> ${startDate}</p>
+            <p><strong>End Date:</strong> ${endDate}</p>
+            <p><strong>Bundle Price (per day):</strong> PHP ${bundlePrice.toLocaleString('en-PH')}</p>
+            <p><strong>Total Cost:</strong> PHP ${totalCost.toLocaleString('en-PH')}</p>
+        `;
+        receiptSection.style.display = 'block';
+    } else {
+        alert('Please fill all fields to generate the receipt.');
+    }
+});
+
+
+
+    const cancelBookingButton = document.getElementById('cancel-booking');
+
+// Cancel booking event
+cancelBookingButton.addEventListener('click', function () {
+    // Hide the receipt section
+    receiptSection.style.display = 'none';
+
+    // Clear the receipt details
+    receiptDetails.innerHTML = '';
+
+    // Navigate back to step 2
+    step2.style.display = 'block';
+});
+
+        
+
+    </script>
+</body>
+</html>
